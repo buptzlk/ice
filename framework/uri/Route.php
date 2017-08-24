@@ -24,12 +24,5 @@ abstract class Framework_Uri_Route
         if($class instanceof Framework_ActionBase) {
             $class->index();
         }
-       /* $action_class = new Action_Index();
-        $action_class->index();
-        //action必须继承自BaseAction
-        if (!$action_class instanceof BaseAction) {
-            trigger_error("{$action_class_name} is not instanceof BaseAction", E_USER_ERROR);
-            die();
-        }*/
     }
 }
