@@ -1,4 +1,0 @@
-<?php
-class ZcacheConf{
-	const ZCACHE_PEFIX = 'gamecentertest2_';
-}
