@@ -1,0 +1,102 @@
+<?php
+/**
+ * 
+ * 数据平台用户角色
+ *
+ * @author rose<qiuyang03@baidu.com>
+ */
+class GroupAction extends AdResourceAction {
+	
+	public function doGet() {
+		$this->doPost();
+    }
+    
+    public function doPost() {
+		$m = strtolower(Util::req('m', ''));
+		switch ($m){
+			
+			case 'list':
+				$this->get_list();
+				break;
+			case 'insert':
+				$this->insert();
+				break;
+			case 'update':
+				$this->update();
+				break;
+			case 'delete':
+				$this->delete();
+				break;
+			case 'forward':
+				$this->forward();
+				break;
+			case 'set_rule':
+				$this->set_rule();
+				break;
+			default:
+				$this->get_list();
+				break;
+				
+		}
+    }
+	function get_list(){
+		
+		//获取用户组
+		$userGroupManage = new UserGroupManage ();
+		$userGroupList = $userGroupManage->getAllList();
+		$this->smarty->assign('list', $userGroupList);
+		$this->smarty->displayApplicationTpl('GroupListTpl');
+	}
+	
+	
+	function delete(){
+		$userGroupManage = new UserGroupManage ();
+		$userGroupManage->delete();
+		$this->get_list();
+	}
+	
+	function insert() {
+		$userGroupManage = new UserGroupManage ();
+		$userGroupManage->insert ();
+		$this->get_list();
+	}
+	
+	function update(){
+		$userGroupManage = new UserGroupManage ();
+		$userGroupManage->update ();
+		$this->get_list();
+	}
+	
+	function forward(){
+		$id = Util::req("id"); //用户组id
+		$f = strtolower(Util::req('f', ''));
+		$menu = new MenuManage();
+		$userGroupManage = new UserGroupManage();
+		if ($f == 'rule') {
+				$allMenus = $menu->getShowMenu();
+				//获取权限
+				$rule_info = $userGroupManage->get_rule($id);
+				$this->smarty->assign('allMenus', $allMenus);
+				$this->smarty->assign('rule_info', $rule_info[1]);
+				$this->smarty->assign('rule_info_root', $rule_info[0]);
+				$this->smarty->assign('id', $id);
+				$this->smarty->displayApplicationTpl('GroupRuleTpl');
+		}
+		if ($f == 'edit') {
+				$userGroupManage = new UserGroupManage ();
+				$obj = $userGroupManage->get();
+				$this->smarty->assign('obj', $obj);
+				$this->smarty->displayApplicationTpl('GroupEditTpl');
+		}
+		if ($f == 'add') {
+				$this->smarty->displayApplicationTpl('GroupEditTpl');
+		}
+		
+	}
+	
+	function set_rule(){
+		$userGroupManage = new UserGroupManage();
+		$userGroupManage->set_rule();
+		$this->get_list();
+	}
+}

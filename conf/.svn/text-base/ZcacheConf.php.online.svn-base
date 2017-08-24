@@ -1,0 +1,4 @@
+<?php
+class ZcacheConf{
+	const ZCACHE_PEFIX = 'gamecenter_';
+}

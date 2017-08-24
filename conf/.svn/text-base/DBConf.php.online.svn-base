@@ -1,0 +1,30 @@
+<?php
+class DBConf {
+	const PRINT_LOG = 0; #服务器sql记录开关 bae环境失效
+	const PRINT_LOG_BAE = 1; #服务器sql记录开关 喷到BAE服务器上
+	const SQL_LG_MODE = 'sql';
+	const SQL_LG_PATH = '/log/sql/';
+	const INFO_LG_PATH = '/log/info/';
+	const PAGE_SIZE = 10;
+	
+	//const STATIC_URL = 'http://shouyou.newoffline.bae.baidu.com/gamecenter/static';
+	//online
+	const STATIC_URL = 'http://opengame.baidu.com/static';
+	
+	//线上
+	
+	const DB1_HOST = '10.42.8.201:4180';
+	const DB1_USER = 'wise_ogc_w';
+	const DB1_PW = 'lwy1FS2cMpPuru7G';
+	const DB1_NAME = 'ops_game_center';
+	const DB1_CHARSET = 'utf8';
+	
+	//线下
+	/*
+	const DB1_HOST = '10.48.21.104';
+	const DB1_USER = 'work';
+	const DB1_PW = 'MhxzKhl';
+	const DB1_NAME = 'game_developer';
+	const DB1_CHARSET = 'utf8';	
+	*/
+}

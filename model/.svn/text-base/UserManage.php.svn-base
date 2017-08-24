@@ -1,0 +1,337 @@
+<?php
+/**
+ * @author rose <qiuyang03@baidu.com>
+ */
+class UserManage {
+	private $table = 'data_user';
+	private $userdao;
+	function __construct(){
+		$this->userdao =  new BaseDao($this->table);
+	}
+	function insert(){
+		$name = Util::req('name');
+		$group_id = Util::req('group_id');
+		$dept_id = Util::req('dept_id');
+		if (!$dept_id) $dept_id = 0;
+		$realname = Util::req('realname');
+		$e_mail = Util::req('e_mail');
+		$this->userdao->setFilteValue('name', $name);
+		$this->userdao->setFilteValue('group_id', $group_id);
+		$this->userdao->setFilteValue('password', 1);
+		$this->userdao->setFilteValue('state', 1);
+		$this->userdao->setFilteValue('dept_id', $dept_id);
+		$this->userdao->setFilteValue('realname', $realname);
+		$this->userdao->setFilteValue('e_mail', $e_mail);
+		$this->userdao->setFilteValue('create_time', date('Y-m-d H:i:s',time()));
+		$this->userdao->insert();
+		$is_tell = Util::reqArr("is_tell", '');
+		$is_tell = $is_tell[0];
+		if ($is_tell == 1) {
+			//发送邮件通知用户
+			$this->sendMailToUser($name, $realname, $e_mail);
+		}
+	}
+	
+	private function sendMailToUser($name, $realname, $e_mail){
+		
+	}
+	
+	private function sendMailToUserforUp($name, $realname, $e_mail){
+	}
+	
+	
+	function get(){
+		$id = Util::req("id", "sql");
+		$this->userdao->setId($id);
+		$rst = $this->userdao->get();
+		return $rst;
+	}
+	
+	function update(){
+		$id = Util::req('id');
+		$name = Util::req('name');
+		$group_id = Util::req('group_id');
+		$dept_id = Util::req('dept_id');
+		if (!$dept_id) $dept_id = 0;
+		$realname = Util::req('realname');
+		$e_mail = Util::req('e_mail');
+		//权限重定向逻辑
+		$this->changeGroupRuleInfo($id, $group_id);
+		$this->userdao->setFilteValue('name', $name);
+		$this->userdao->setFilteValue('group_id', $group_id);
+		$this->userdao->setFilteValue('dept_id', $dept_id);
+		$this->userdao->setFilteValue('realname', $realname);
+		$this->userdao->setFilteValue('e_mail', $e_mail);
+		$this->userdao->setConditionFV('id', $id);
+		$this->userdao->update();
+		
+		$is_tell = Util::reqArr("is_tell", '');
+		$is_tell = $is_tell[0];
+		if ($is_tell == 1) {
+			//邮件通知
+			$this->sendMailToUserforUp($name, $realname, $e_mail);
+		}
+	}
+	
+	/**
+	 * 组别发生变化时候  清空用户权限使其继承组权限
+	 * @param  $id
+	 * @param  $group_id
+	 */
+	private function changeGroupRuleInfo($id, $group_id){
+		$sql = "select group_id from user where id = $id";
+		$result = $this->userdao->query($sql);
+		$obj = mysql_fetch_assoc($result);
+		$group_id_db = $obj['group_id'];
+		if ($group_id_db != $group_id) {
+			//清空当前用户所有权限
+			$this->userdao->cleanAllFV();
+			$this->userdao->setFilteValue("rule_info", "");
+			$this->userdao->setConditionFV("id", $id);
+			$this->userdao->update();
+			$this->userdao->cleanAllFV();
+		}
+	}
+	
+	function delete(){
+		$id = Util::req('id');
+		if ($id == 0){
+			echo '<script>alert("数据平台RD不能删除")</script>';
+			return;
+		}
+		$this->userdao->cleanConditionFV();
+		$this->userdao->setConditionFV('id', $id);
+		$this->userdao->delete();
+	}
+	
+	/**
+	 * 分页获取列表 拥有高级查询+分页为一体
+	 * $condition 是否需要查询条件 插入和修改删除时设置false
+	 * @return
+	 */
+	function getList($condition = true){
+		$page_size = Util::req('page_size');
+		$page_num = Util::req('page_num');
+		$name = Util::req('name');
+		$state = Util::req('state');
+		$start_time = Util::req('start_time');
+		$end_time = Util::req('end_time');
+		$group_id = Util::req('group_id');
+		
+		$this->userdao->setColumns('id');
+		$this->userdao->setColumns('name');
+		$this->userdao->setColumns('group_id');
+		$this->userdao->setColumns('tb1.name group_name');
+		$this->userdao->setColumns('state');
+		$this->userdao->setColumns('create_time');
+//		$this->userdao->setOrderBy('tb1.id', 'desc');
+		$this->userdao->setOrderBy('id', 'asc');
+		$this->userdao->setJoinTables('data_user_group','tb1');
+		$this->userdao->setJoinTablesCondition('tb1.id', 'group_id');
+		$page = new Page($page_size, $page_num);
+		if ($condition) {
+			//封装查询条件
+			if ($name) {
+				$this->userdao->setConditionFV('name', $name, 'like');
+				$page->setSearchKV('name', $name);
+			} 
+			if ($group_id) {
+				$this->userdao->setConditionFV('group_id', $group_id);
+				$page->setSearchKV('group_id', $group_id);
+			} 
+			if ($state === '0' || $state === '1') {
+				$this->userdao->setConditionFV('state', $state);
+				$page->setSearchKV('state', $state);
+			} 
+			if ($start_time) {
+				$this->userdao->setConditionFV('create_time', $start_time, '>');
+				$page->setSearchKV('start_time', $start_time, '<');
+			}
+			if ($end_time) {
+				$this->userdao->setConditionFV('create_time', $end_time, '<');
+				$page->setSearchKV('end_time', $end_time);
+			}
+		}
+		
+		$this->userdao->setPage($page);
+		$results =  $this->userdao->getList();
+		return $results;
+	}
+	
+	/**
+	 * 设定用户权限
+	 * 数据结构array(
+	 * array(1, array(2,3,4,5)),
+	 * array(6, array(6,8,9,10))
+	 * )
+	 */
+	function set_rule(){
+		$id = Util::req("id");
+		//查找所有主菜单
+		$sql = "select id from data_menu where parent_id = -1 order by sequence desc";
+		$result = $this->userdao->query($sql);
+		$ruleInfo = array();
+		while ($obj = mysql_fetch_assoc($result)) {
+			$root_menu = $obj['id'];
+			$sub_menus = Util::reqArr("sub_menu".$root_menu, 'sql');
+			if (!isset($sub_menus)) continue;
+			$sub_menu_array = array();
+			foreach ($sub_menus as $sub_menu){
+				$sub_menu_array[] = $sub_menu;
+			}
+			$ruleInfo[] = array($root_menu, $sub_menu_array);
+		}
+		$this->userdao->setFilteValue('rule_info', serialize($ruleInfo));
+		$this->userdao->setConditionFV('id', $id);
+		$this->userdao->update();
+	}
+	
+	/**
+	 * 获取用户权限(用户权限+组权限)
+	 * @return array(array(1,2,3),array(5,12,11)) 
+	 */
+	function get_rule($id, $group_id){
+		
+		$this->userdao->setId($id);
+		$this->userdao->setColumns('rule_info');
+		$rst = $this->userdao->getColumnsById();
+		
+		$rule_info = $rst['rule_info'];
+		$rule_info = unserialize($rule_info.'');
+		$result_data_sub = array();
+		$result_data_root = array();
+		if ($rule_info) {
+			foreach ($rule_info as $obj){
+				$result_data_sub = array_merge($result_data_sub, $obj[1]);
+				$result_data_root[] = $obj[0];
+			}
+		}
+		
+		//以下 合并用户+用户组权限去除重复
+		$userGroupManage = new UserGroupManage();
+		$group_rule = $userGroupManage->get_rule($group_id);
+		if ($group_rule) {
+			$result_data_root = array_merge($result_data_root, $group_rule[0]);
+			$result_data_sub = array_merge($result_data_sub, $group_rule[1]);
+		}
+		return array($result_data_root, $result_data_sub);
+	}
+	
+	function login(){
+		$sql = sprintf("select id, name, group_id, rule_info, create_time, login_time, password, realname from data_user where name = '%s' ", OPS_SESSION_USER);
+		$result = $this->userdao->query($sql);
+		$userInfo = mysql_fetch_assoc($result);
+		if ($userInfo) {
+			$_SESSION["USER_INFO"] = $userInfo;
+			//更新登陆时间
+			$this->updateLoginTime($userInfo['id']);
+			//设定权限至session
+			$rule_info = unserialize($userInfo['rule_info'].'');
+			$this->set_user_info($rule_info, $userInfo['id'], $userInfo['group_id']);
+			return true;
+		}
+		return false;
+	}
+	private function updateLoginTime($id){
+		$this->userdao->cleanAllFV();
+		$this->userdao->setFilteValue('login_time', date('Y-m-d H:i:s',time()));
+		$this->userdao->setConditionFV('id', $id);
+		$this->userdao->update();
+	}
+	/**
+	 * 封装用户菜单、以及验证权限map至session
+	 * @param  $rule_info
+	 * @return string
+	 */
+	private function set_user_info($rule_info, $id, $group_id){
+		$sub_menu = array();
+		//非超级管理员用户设定菜单
+		if ($id != -1) {
+			//获取所属组权限
+			$sql = "select rule_info from data_user_group where id = $group_id";
+			$result = $this->userdao->query($sql);
+			$rule_info_obj = mysql_fetch_assoc($result);
+			$rule_info_group = $rule_info_obj['rule_info'];
+			$rule_info_group = unserialize($rule_info_group.'');
+			//如果权限空 取用户组权限
+			if (!$rule_info){
+				$rule_info = $rule_info_group;
+			}
+			//设定权限至SESSION 用于页面显示
+			$rule_info_session = array();
+			if (count($rule_info) > 0) {
+				foreach ($rule_info as $obj) {
+					$root_menu_id = $obj[0];
+					$sub_menu_ids = $obj[1];
+					//设定用户拥有子菜单到array 数据结构array(1,2,3,...)
+					$sub_menu = array_merge($sub_menu, $sub_menu_ids);
+					$root_menu_sql = "select * from data_menu where id = %s order by sequence desc";
+					$root_menu_sql = sprintf($root_menu_sql, $root_menu_id);
+					$result = $this->userdao->query($root_menu_sql);
+					$root_menu = mysql_fetch_assoc($result);
+					$sub_menu_sql = "select * from data_menu where id in (%s)  order by sequence desc";
+					$sub_menu_sql = sprintf($sub_menu_sql, implode(",", $sub_menu_ids));
+					$sub_menu_result = $this->userdao->query($sub_menu_sql);
+					$sub_menu_array = array();
+					while ($sub_obj = mysql_fetch_assoc($sub_menu_result)){
+						$sub_menu_array[] = $sub_obj;
+					}
+					$rule_info_session[] = array("root_menu"=>$root_menu, "sub_menu"=>$sub_menu_array);
+				}
+				$_SESSION['USER_MENU'] = $rule_info_session;
+				
+			}
+		}
+		//设定权限检测至SESSION
+		//非超级管理员
+		if ($id != -1) {
+			$check_url = array();
+			foreach ($sub_menu as $obj) {
+				$sql = "select url from data_menu where id = $obj";
+				$result = $this->userdao->query($sql);
+				$sub_menu = mysql_fetch_assoc($result);
+				$url = $sub_menu['url'];
+				$check_url[] = $url;
+			}
+			$_SESSION['ALLOWED_URL'] = $check_url;
+		}else{ //超级管理员清空
+			$_SESSION['ALLOWED_URL'] = array();
+		}
+	}
+	
+	/**
+	 * 修改密码
+	 * @param  $oldpwd
+	 * @param  $newpwd
+	 * @return multitype:boolean string 
+	 */
+	function changePwd($oldpwd, $newpwd) {
+		$oldpwd = Util::getPwd($oldpwd);
+		$sessionpwd = $_SESSION['USER_INFO']['password'];
+		$id = $_SESSION['USER_INFO']['id'];
+		if ($oldpwd != $sessionpwd) {
+			return array(false, "原始密码输入错误");
+		}
+		$newpwd = Util::getPwd($newpwd);
+		$this->userdao->setFilteValue('password', $newpwd);
+		$this->userdao->setConditionFV('id', $id);
+		$this->userdao->update();
+		return array(true, "修改密码成功,请重新登录");
+		
+	}
+	
+	/**
+	 * 获得超级用户拥有授权系统菜单设定权限
+	 */
+	function getSuperUser(){
+		$this->userdao->setColumns('name');
+		$this->userdao->setConditionFV('is_special', 1);
+		$results =  $this->userdao->getListNoPage();
+		$users = array();
+		foreach ($results as $v) {
+			$users[] = $v['name'];
+		}
+		return $users;
+	}
+	
+}

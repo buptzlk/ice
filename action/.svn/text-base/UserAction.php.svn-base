@@ -1,0 +1,126 @@
+<?php
+/**
+ * 
+ * 数据平台用户配置
+ *
+ * @author rose<qiuyang03@baidu.com>
+ */
+class UserAction extends AdResourceAction {
+	
+	public function doGet() {
+		$this->doPost();
+    }
+    
+    public function doPost() {
+		$m = strtolower(Util::req('m', ''));
+		switch ($m){
+			
+			case 'list':
+				$this->get_list();
+				break;
+			case 'insert':
+				$this->insert();
+				break;
+			case 'update':
+				$this->update();
+				break;
+			case 'delete':
+				$this->delete();
+				break;
+			case 'forward':
+				$this->forward();
+				break;
+			case 'set_rule':
+				$this->set_rule();
+				break;
+			default:
+				$this->get_list();
+				break;
+				
+		}
+    }
+	function get_list($condition = true){
+		$userManage = new UserManage ();
+		
+		$results = $userManage->getList($condition);
+		$result_datas = $results[0];
+		$page = $results[1];
+		//获取用户组
+		$userGroupManage = new UserGroupManage ();
+		$userGroupList = $userGroupManage->getAllList();
+		$this->smarty->assign('list', $result_datas);
+		$this->smarty->assign('userGroupList', $userGroupList);
+		$this->smarty->assign('page', $page);
+		$this->smarty->displayApplicationTpl('UserListTpl');
+	}
+	
+	
+	function delete(){
+		$userManage = new UserManage();
+		$userManage->delete();
+		$this->get_list(false);
+	}
+	
+	function insert() {
+		$userManage = new UserManage ();
+		$userManage->insert ();
+		$this->get_list(false);
+	}
+	
+	function update(){
+		$userManage = new UserManage ();
+		$userManage->update ();
+		$this->get_list(false);
+	}
+	
+	function forward(){
+		$f = strtolower(Util::req('f', ''));
+		$pageSize = Util::req('page_size');
+		$pageNum = Util::req('page_num');
+		$page = new Page($pageSize, $pageNum);
+		//添加
+		if ($f == 'add') {
+			$page_num = strtolower(Util::req('page_num', ''));
+			$userGroupManage = new UserGroupManage ();
+			$userGroupList = $userGroupManage->getAllList();
+			$this->smarty->assign('userGroupList', $userGroupList);
+			$this->smarty->assign('obj', "");
+			$flag = 'UserEditTpl';
+		}
+		//修改
+		if ($f == 'edit') {
+			$userManage = new UserManage ();
+			$obj = $userManage->get();
+			$page_num = strtolower(Util::req('page_num', ''));
+			$userGroupManage = new UserGroupManage ();
+			$userGroupList = $userGroupManage->getAllList();
+			$this->smarty->assign('userGroupList', $userGroupList);
+			$this->smarty->assign('obj', $obj);
+			$flag = 'UserEditTpl';
+		}
+		if ($f == 'rule') {
+			//获取权限
+			$id = Util::req("id");
+			$menu = new MenuManage();
+			$userManage = new UserManage();
+			$allMenus = $menu->getShowMenu();
+			$id = Util::req("id");
+			$group_id = Util::req("group_id");
+			$rule_info = $userManage->get_rule($id, $group_id);
+			$this->smarty->assign("allMenus", $allMenus);
+	//		print_r(rule_info_root);
+			$this->smarty->assign("rule_info_root", $rule_info[0]);
+			$this->smarty->assign("rule_info", $rule_info[1]);
+			$this->smarty->assign("id", $id);
+			$flag = 'UserRuleTpl';
+		}
+		$this->smarty->assign('page', $page);
+		$this->smarty->displayApplicationTpl($flag);
+	}
+	
+	function set_rule(){
+		$userManage = new UserManage();
+		$userManage->set_rule();
+		$this->get_list();
+	}
+}

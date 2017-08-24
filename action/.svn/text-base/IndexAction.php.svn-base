@@ -1,0 +1,13 @@
+<?php
+/**
+ * 
+ * 数据中心首页
+ *
+ * @author walu<zhangmingqiang@baidu.com>
+ */
+class IndexAction extends AdResourceAction {
+	
+	public function doGet() {
+		$this->smarty->displayApplicationTpl('IndexTpl');
+    }
+}

@@ -1,0 +1,23 @@
+<?php
+class BcsConf {
+   /*线上配置
+    const AK = 'coIymieJcGXytngtgOcAXkMuZFB9vk';
+	const SK = 'OPzC2YgB2mYpVBLFhaiyIvi1kglLOzaE2';
+	const HOST = 'bj.bs.bae.baidu.com';//s3.bae.baidu.com
+	const BUCKET = 'repackonline';
+
+	const ROOT = '/lcmanage/';
+    */
+	
+	/**
+	 * 线下配置
+	 */
+	const AK = 'coIymieJcGXytngtgOcAXkMuZFB9vk';
+	const SK = 'OPzC2YgB2mYpVBLFhaiyIvi1kglLOzaE2';
+	const HOST = 'bj.bs.bae.baidu.com';//s3.bae.baidu.com
+	const BUCKET = 'gamecenter-test';
+
+	const ROOT = '/gamecenter_test/';
+	const SDK_DOWN_HOST = 'http://bs.baidu.com/gamecenter-test';
+	
+}

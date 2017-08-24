@@ -1,0 +1,15 @@
+<?php
+/**
+ * UUAP用户退出逻辑
+ *
+ * @author zhenglei
+ * @modify walu
+ */
+class LogoutAction extends BaseAction{
+
+	public function execute() {
+        $uuap = OpsUuapClient::getOpsInstance();
+        $uuap->logout();
+        exit();
+	}
+}

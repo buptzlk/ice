@@ -1,0 +1,102 @@
+<?php
+/**
+ * 
+ * 数据平台菜单维护
+ *
+ * @author rose<qiuyang03@baidu.com>
+ */
+class MenuAction extends AdResourceAction {
+	
+public function doGet() {
+		$this->doPost();
+    }
+    
+    public function doPost() {
+		$m = strtolower(Util::req('m', ''));
+		switch ($m){
+			
+			case 'list':
+				$this->get_list();
+				break;
+			case 'insert':
+				$this->insert();
+				break;
+			case 'update':
+				$this->update();
+				break;
+			case 'delete':
+				$this->delete();
+				break;
+			case 'forward':
+				$this->forward();
+				break;
+			case 'set_rule':
+				$this->set_rule();
+				break;
+			default:
+				$this->get_list();
+				break;
+				
+		}
+    }
+	function get_list($condition = true){
+		$menuManage = new MenuManage ();
+		$results = $menuManage->getList($condition);
+		$menuList = $menuManage->getParentList();
+		//modified by zhulukun in 2016/4/27
+		$this->smarty->assign('menuList', $menuList);
+		$this->smarty->assign('list', $results);
+		$this->smarty->displayApplicationTpl("MenuListTpl");
+	}
+	
+	
+	function delete(){
+		$menuManage = new MenuManage ();
+		$menuManage->delete();
+		$this->get_list(false);
+	}
+	
+	function insert() {
+		$menuManage = new MenuManage ();
+		$ret=$menuManage->insert ();
+		//if menu exists,alert the message. modified by zhulukun in 2016/4/25
+		if($ret == 'menu_exist')
+			echo '<script>alert("菜单已存在")</script>';
+		else
+			echo '<script>alert("菜单添加成功")</script>';
+		$this->get_list(false);
+	}
+	
+	function update(){
+		$menuManage = new MenuManage ();
+		$menuManage->update ();
+		$this->get_list(false);
+	}
+	
+	function forward(){
+		$f = strtolower(Util::req('f', ''));
+		$pageSize = Util::req('page_size');
+		$pageNum = Util::req('page_num');
+		$page = new Page($pageSize, $pageNum);
+		$menu = new MenuManage();
+		//modified by zhulukun in 2016/4/27
+		$results = $menu->getList($condition);
+		$this->smarty->assign('list', $results);
+		/*modified end*/
+		$menuList = $menu->getParentList();
+		$this->smarty->assign('menuList', $menuList);
+		$this->smarty->assign('page', $page);
+		if ($f == 'edit') {
+				$obj = $menu->get();
+				$this->smarty->assign('obj', $obj);
+				//modified by zhulukun in 2016/4/27
+				$this->smarty->displayApplicationTpl('MenuListTpl');
+		}
+		if ($f == 'add') {
+				$this->smarty->displayApplicationTpl('MenuListTpl');
+		}
+		
+		
+	}
+    
+}
