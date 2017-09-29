@@ -1,5 +1,7 @@
 <?php
+
 class Conf_Env {
+
     const ACTION = 'action';
     const DEFAULTREQUEST = 'Index';
 	/**
